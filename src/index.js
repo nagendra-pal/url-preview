@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDom from "react-dom";
 import axios from "axios";
-import { isEmpty } from "lodash";
+import { isEmpty, debounce } from "lodash";
 import {
   Body,
   Container,
@@ -23,28 +23,23 @@ class URLPreview extends React.Component {
       loading: false,
       message: "",
     };
-    this.cancel = "";
+    
+    this.debouncedSearch = debounce(query => this.fetchResult(query), 500); // - debounce delay of 500ms
   }
 
   changeHandler = (e) => {
     const query = e.target.value;
 
     this.setState({ query, loading: true }, () => {
-      this.fetchResult(query);
+      this.debouncedSearch(query);
     });
   };
 
   fetchResult = (query) => {
     const searchURL = `http://api.linkpreview.net/?key=7b5b27b9e08d6cd6fcb193ae8708b589&q=${query}`;
 
-    if (this.cancel) {
-      this.cancel.cancel();
-    }
-
-    this.cancel = axios.CancelToken.source();
-
     axios
-      .get(searchURL, { cancelToken: this.cancel.token })
+      .get(searchURL)
       .then((res) => {
         this.setState({ loading: false, message: "", result: res.data });
       })
